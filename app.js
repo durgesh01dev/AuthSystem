@@ -1,3 +1,5 @@
+//incase dotenv is not in the current path, then path can be given in config file.
+require('dotenv').config()
 const express = require("express");
 
 const app = express();
