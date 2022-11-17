@@ -5,6 +5,7 @@ require("./config/database").connect();
 const express = require("express");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const auth = require("./middleware/auth");
 
 const app = express();
 //using the json middleware for parsing json
@@ -53,7 +54,7 @@ app.post("/signup", async (req, res) => {
       }
     );
 
-    user.token = token; //normally token is not saved in dd, depends on devs choice.
+    user.token = token; //normally token is not saved in db, depends on devs choice.
     //whether that token should stored in db or not, just your choice
 
     //Avoiding sending password as response
@@ -107,7 +108,8 @@ app.post("/signin", async (req, res) => {
 });
 
 //only logged in user should view, use token here
-app.get('/dashboard', (req, res) => {
+//using middleware for user authorization
+app.get("/dashboard", auth, (req, res) => {
   res.status(200).send("Some SECRET INFORMATION !!");
-})
+});
 module.exports = app;
