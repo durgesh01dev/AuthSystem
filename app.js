@@ -11,6 +11,7 @@ const app = express();
 app.use(express.json());
 
 const User = require("./model/user");
+
 //home route
 app.get("/", (req, res) => {
   res.send("<h1>Hello from Auth System</h1>");
@@ -59,6 +60,47 @@ app.post("/signup", async (req, res) => {
     user.password = undefined;
 
     res.status(201).json(user);
+  } catch (error) {
+    console.log(error);
+  }
+});
+
+//login/signin user
+app.post("/signin", async (req, res) => {
+  try {
+    //1. get login details from request by destructuring
+    const { email, password } = req.body;
+
+    //2. check if email passwords exist in body
+    if (!(email && password)) {
+      res.status(400).json("Required Fields are missing for login");
+    }
+    //3. get user from database, since it can take time
+    const user = await User.findOne({ email });
+    if (!user) {
+      res.status(400).send("You are not registered in the auth system");
+    }
+    //user exists
+    //4. Compare and verify the password, this comparison process can take time, so use await here
+    if (await bcrypt.compare(password, user.password)) {
+      //password is correct, token creation
+      //here headers are not required, directly working on payload, secret key, further expiresIn
+      const token = jwt.sign(
+        { user_id: user._id, email },
+        process.env.SECRET_KEY,
+        {
+          expiresIn: "2h",
+        }
+      );
+      user.token = token;
+      //make password undefined for response
+      user.password = undefined;
+      res.status(200).json(user);
+    } else {
+      //message can be refine based on the application requirement
+      res.status(400).send("Either email or password is incorrect.");
+    }
+    //5. give token or other info to user
   } catch (error) {
     console.log(error);
   }
