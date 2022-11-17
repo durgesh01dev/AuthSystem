@@ -105,4 +105,9 @@ app.post("/signin", async (req, res) => {
     console.log(error);
   }
 });
+
+//only logged in user should view, use token here
+app.get('/dashboard', (req, res) => {
+  res.status(200).send("Some SECRET INFORMATION !!");
+})
 module.exports = app;
