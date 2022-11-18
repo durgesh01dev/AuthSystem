@@ -1,15 +1,21 @@
 //in case dotenv is not in the current path, then path can be given in config file.
 require("dotenv").config();
+
 //making the database connection
 require("./config/database").connect();
 const express = require("express");
-const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+
+//middlewares
+const cookieParser = require("cookie-parser");
+const bcrypt = require("bcryptjs");
 const auth = require("./middleware/auth");
 
 const app = express();
 //using the json middleware for parsing json
 app.use(express.json());
+//using cookie parser middleware to parse cookie
+app.use(cookieParser());
 
 const User = require("./model/user");
 
@@ -66,7 +72,7 @@ app.post("/signup", async (req, res) => {
   }
 });
 
-//login/signin user
+//login or signin user
 app.post("/signin", async (req, res) => {
   try {
     //1. get login details from request by destructuring
@@ -96,7 +102,19 @@ app.post("/signin", async (req, res) => {
       user.token = token;
       //make password undefined for response
       user.password = undefined;
-      res.status(200).json(user);
+
+      //to send cookies
+      const options = {
+        //3 days, 24 hours, 60mins 60 sec, and 1000 for milliseconds
+        expires: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
+        //only the backend part can check this
+        httpOnly: true,
+      };
+
+      res.status(200).cookie("token", token, options).json({
+        success: true,
+        user,
+      });
     } else {
       //message can be refine based on the application requirement
       res.status(400).send("Either email or password is incorrect.");
